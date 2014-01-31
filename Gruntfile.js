@@ -36,14 +36,35 @@ module.exports = function (grunt) {
 		// Configuration to be run (and then tested).
 		version_git: {
 			default_options: {
-				files: {src:aTestFiles}
+				files: {src:'test/fixtures/*'}
 			},
-			custom_options: {
+			set_major: {
 				options: {
-					major: '2'
+					major: '7'
 					,revision: false
 				},
-				files: {src:'test/fixtures/*'}
+				files: {src:aTestFiles[1]}
+			},
+			bump_major: {
+				options: {
+					major: true
+					,revision: false
+				},
+				files: {src:aTestFiles[2]}
+			},
+			set_minor: {
+				options: {
+					minor: '11'
+					,revision: false
+				},
+				files: {src:aTestFiles[3]}
+			},
+			bump_minor: {
+				options: {
+					minor: true
+					,revision: false
+				},
+				files: {src:aTestFiles[4]}
 			}
 		},
 
@@ -55,9 +76,11 @@ module.exports = function (grunt) {
 	});
 
 	grunt.registerMultiTask('preparetest', '', function() {
-		var fs = require('fs');
+		var fs = require('fs')
+			,sSource = fs.readFileSync('test/file.js').toString()
+		;
 		aTestFiles.forEach(function(src,i){
-			fs.writeFileSync(src,'test 1.'+(3*i%5)+'.'+i);
+			fs.writeFileSync(src,sSource.replace('0.0.0','1.'+(3*i%5)+'.'+i));
 		});
 	});
 

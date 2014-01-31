@@ -1,1 +1,8 @@
-test 2.3.1
+/*
+ * Example
+ * @version 7.3.3
+ */
+(function(){
+	'use strict';
+	return {};
+})();

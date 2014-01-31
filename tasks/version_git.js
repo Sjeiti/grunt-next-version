@@ -7,7 +7,6 @@
  */
 
 'use strict';
-
 module.exports = function (grunt) {
 	grunt.registerMultiTask('version_git','Change version numbers in files, including the option to change the revision number to the number of Git commits.',function () {
 		var aFiles = [];
@@ -47,6 +46,11 @@ module.exports = function (grunt) {
 				,bMinor = oCurVersion.minor!==sNewMinor
 				,bRevision = oCurVersion.revision!==sNewRevision
 			;
+			console.log('grunt.option.major',grunt.option.major); // log
+			console.log('oOptions.major',oOptions.major); // log
+			console.log('oCurVersion.major',oCurVersion.major); // log
+			console.log('sNewMajor',sNewMajor); // log
+			console.log("\n"); // log
 			if (oOptions.git) {
 				exec('git rev-list HEAD --count', function(error,stdout){//,stderr
 					var sGitRevision = stdout.match(/\d+/).pop();
@@ -65,8 +69,10 @@ module.exports = function (grunt) {
 				dontSaveVersion();
 			}
 			function newNumber(type){
-				var oOption = grunt.option(type);
-				return oOption!==undefined?oOption:(oOptions[type]?''+(parseInt(oCurVersion[type],10)+1):oCurVersion[type]);
+				var oParam = grunt.option(type)
+					,oSet = oOptions[type]
+					,oCur = oCurVersion[type];
+				return oParam!==undefined?oParam:(oSet===true?''+(parseInt(oCur,10)+1):(oSet===false?oCur:oSet));
 			}
 			function saveVersion(){
 				var sNewVersion = sNewMajor+'.'+sNewMinor+'.'+sNewRevision;

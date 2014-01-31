@@ -19,6 +19,9 @@ grunt.loadNpmTasks('grunt-version-git');
 
 ## The "version_git" task
 
+This task changes version numbers in files, including the option to change the revision number to the number of Git commits.
+The task makes use of the `git` command and expects it to be globally installed.
+
 ### Overview
 In your project's Gruntfile, add a section named `version_git` to the data object passed into `grunt.initConfig()`.
 
@@ -37,17 +40,35 @@ grunt.initConfig({
 
 ### Options
 
-#### options.separator
-Type: `String`
-Default value: `',  '`
+#### options.major
+Type: `Boolean|Number`
+Default value: `false`
 
-A string value that is used to do something with whatever.
+lorem
 
-#### options.punctuation
-Type: `String`
-Default value: `'.'`
+#### options.minor
+Type: `Boolean|Number`
+Default value: `false`
 
-A string value that is used to do something else with whatever else.
+ipsum
+
+#### options.release
+Type: `Boolean|Number`
+Default value: `true`
+
+ipsum
+
+#### options.git
+Type: `Boolean`
+Default value: `true`
+
+ipsum
+
+#### options.regex
+Type: `Regexp`
+Default value: `/\d+\.\d+\.\d+/`
+
+ipsum
 
 ### Usage Examples
 
@@ -57,12 +78,22 @@ In this example, the default options are used to do something with whatever. So 
 ```js
 grunt.initConfig({
   version_git: {
-    options: {},
     files: {
-      'dest/default_options': ['src/testing', 'src/123'],
+      src: ['src/testing/file0.js'],
     },
   },
 })
+```
+
+```js
+/*
+ * Example
+ * @version 1.0.1
+ */
+(function(){
+	'use strict';
+	return {};
+})();
 ```
 
 #### Custom Options
@@ -72,11 +103,9 @@ In this example, custom options are used to do something else with whatever else
 grunt.initConfig({
   version_git: {
     options: {
-      separator: ': ',
-      punctuation: ' !!!',
     },
     files: {
-      'dest/default_options': ['src/testing', 'src/123'],
+      src: ['src/testing', 'src/123'],
     },
   },
 })

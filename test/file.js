@@ -1,6 +1,6 @@
 /*
  * Example
- * @version 1.3.3
+ * @version 0.0.0
  */
 (function(){
 	'use strict';

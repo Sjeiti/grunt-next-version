@@ -25,6 +25,9 @@ var grunt = require('grunt');
 var aTestFiles = '....'.split('.').map(function(o,i){
 	return 'test/fixtures/file'+i+'.js';
 });
+function getVa(fileNr){
+	return grunt.file.read(aTestFiles[fileNr]).match(/\d+\.\d+\.\d+/).pop().split('.');
+}
 
 exports.version_git = {
 	setUp: function(done) {
@@ -33,20 +36,27 @@ exports.version_git = {
 	},
 	default_options: function(test) {
 		test.expect(1);
-		test.equal(
-			grunt.file.read(aTestFiles[0])
-			,'test 2.0.1'
-			,'should describe what the default behavior is.'
-		);
+		test.notEqual(getVa(0)[2],'0','By default set to git revision #.');
 		test.done();
 	},
-	custom_options: function(test) {
+	set_major: function(test) {
 		test.expect(1);
-
-//		var actual = grunt.file.read('tmp/custom_options');
-//		var expected = grunt.file.read('test/expected/custom_options');
-		test.equal(1, 1, 'should describe what the custom option(s) behavior is.');
-
+		test.equal(getVa(1)[0],'7','Set major version number.');
+		test.done();
+	},
+	bump_major: function(test) {
+		test.expect(1);
+		test.equal(getVa(2)[0],'2','Bump major version number.');
+		test.done();
+	},
+	set_minor: function(test) {
+		test.expect(1);
+		test.equal(getVa(3)[1],'11','Set minor version number.');
+		test.done();
+	},
+	bump_minor: function(test) {
+		test.expect(1);
+		test.equal(getVa(4)[1],'3','Bump minor version number.');
 		test.done();
 	}
 };
