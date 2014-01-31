@@ -46,11 +46,6 @@ module.exports = function (grunt) {
 				,bMinor = oCurVersion.minor!==sNewMinor
 				,bRevision = oCurVersion.revision!==sNewRevision
 			;
-			console.log('grunt.option.major',grunt.option.major); // log
-			console.log('oOptions.major',oOptions.major); // log
-			console.log('oCurVersion.major',oCurVersion.major); // log
-			console.log('sNewMajor',sNewMajor); // log
-			console.log("\n"); // log
 			if (oOptions.git) {
 				exec('git rev-list HEAD --count', function(error,stdout){//,stderr
 					var sGitRevision = stdout.match(/\d+/).pop();
