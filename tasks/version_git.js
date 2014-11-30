@@ -47,6 +47,7 @@ module.exports = function (grunt) {
 				var bLastFile = i===iFiles-1
 					,sSource = fs.readFileSync(src).toString()
 					// the current version
+					,aMatch = sSource.match(oOptions.regex)
 					,sVersion = sSource.match(oOptions.regex).pop()
 					,aVersion = sVersion.split('.')
 					,oCurVersion = {
@@ -84,7 +85,7 @@ module.exports = function (grunt) {
 				}
 				function saveVersion(){
 					var sNewVersion = sNewMajor+'.'+sNewMinor+'.'+sNewRevision;
-					sSource = sSource.replace(oOptions.regex,sNewVersion);
+					sSource = sSource.replace(aMatch[0],aMatch[0].replace(sVersion,sNewVersion));
 					fs.writeFileSync(src,sSource);
 					grunt.log.writeln('File \''+src+'\' updated from',sVersion,'to',sNewVersion);
 					bLastFile&&done(true);
