@@ -22,41 +22,43 @@ var grunt = require('grunt');
 		test.ifError(value)
 */
 
-var aTestFiles = '....'.split('.').map(function(o,i){
-	return 'test/fixtures/file'+i+'.js';
-});
-function getVa(fileNr){
-	return grunt.file.read(aTestFiles[fileNr]).match(/\d+\.\d+\.\d+/).pop().split('.');
-}
-
-exports.version_git = {
-	setUp: function(done) {
-		// setup here if necessary
-		done();
-	},
-	default_options: function(test) {
-		test.expect(1);
-		test.notEqual(getVa(0)[2],'0','By default set to git revision #.');
-		test.done();
-	},
-	set_major: function(test) {
-		test.expect(1);
-		test.equal(getVa(1)[0],'7','Set major version number.');
-		test.done();
-	},
-	bump_major: function(test) {
-		test.expect(1);
-		test.equal(getVa(2)[0],'2','Bump major version number.');
-		test.done();
-	},
-	set_minor: function(test) {
-		test.expect(1);
-		test.equal(getVa(3)[1],'11','Set minor version number.');
-		test.done();
-	},
-	bump_minor: function(test) {
-		test.expect(1);
-		test.equal(getVa(4)[1],'3','Bump minor version number.');
-		test.done();
+var aFiles = [
+		'test/fixtures/set_major.js'
+		,'test/fixtures/bump_major.js'
+		,'test/fixtures/set_minor.js'
+		,'test/fixtures/bump_minor.js'
+		,'test/fixtures/set_patch.js'
+		,'test/fixtures/bump_patch.js'
+		,'test/fixtures/cli_set_minor.js'
+		,'test/fixtures/cli_bump_minor.js'
+	]
+	,oVersions = {
+		set_major: '7.2.3'
+		,bump_major: '2.0.0'
+		,set_minor: '1.7.3'
+		,bump_minor: '1.3.0'
+		,set_patch: '1.2.7'
+		,bump_patch: '1.2.4'
+		,cli_set_minor: '1.7.3'
+		,cli_bump_minor: '1.3.0'
 	}
-};
+	,oExports = {
+		setUp: function(done) {
+			// setup here if necessary
+			done();
+		}
+	}
+;
+
+aFiles.forEach(function(filePath){
+	var sKey = filePath.split('/').pop().split('.').shift()
+		,sVersion = grunt.file.read(filePath).match(/\d+\.\d+\.\d+/).pop();//.split('.');
+	oExports[sKey] = function(test) {
+		test.expect(1);
+		test.equal(sVersion,oVersions[sKey],sKey);
+		test.done();
+	};
+});
+
+exports.version_git = oExports;
+

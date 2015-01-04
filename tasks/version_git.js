@@ -8,7 +8,7 @@
 
 'use strict';
 module.exports = function (grunt) {
-	grunt.registerMultiTask('version_git','Change version numbers in files, including the option to change the revision number to the number of Git commits.',function () {
+	grunt.registerMultiTask('version_git','Change version numbers in files, including the option to change the patch number to the number of Git commits.',function () {
 		var aFiles = [];
 		this.files.forEach(function (f) {
 			Array.prototype.push.apply(aFiles,f.src);
@@ -16,16 +16,53 @@ module.exports = function (grunt) {
 		var done = this.async()
 			,fs = require('fs')
 			,exec = require('child_process').exec
+			,aNumNum = {major:0,minor:1,patch:2}
 			// set default options
 			,oOptions = this.options({
 				major: false
 				,minor: false
-				,revision: true
-				,git: true
+				,patch: true
+				,build: 'num'//||hash
+				,git: false
 				,regex: /\d+\.\d+\.\d+/
 			})
 			,iFiles = aFiles.length
+			,sBump
+			//
+			,oOptionMajor = grunt.option('major')
+			,oOptionMinor = grunt.option('minor')
+			,oOptionPatch = grunt.option('patch')
+			,bOptionMajor = oOptionMajor!==undefined
+			,bOptionMinor = oOptionMinor!==undefined
+			,bOptionPatch = oOptionPatch!==undefined
 		;
+		//
+		// params
+		if (bOptionMajor||bOptionMinor||bOptionPatch) {
+			oOptions.major = bOptionMajor?oOptionMajor:false;
+			oOptions.minor = bOptionMinor?oOptionMinor:false;
+			oOptions.patch = bOptionPatch?oOptionPatch:false;
+		} else {
+			// reset others if major or minor bumps
+			if (oOptions.major===true) {
+				oOptions.minor = false;
+				oOptions.patch = false;
+			} else if (oOptions.minor===true) {
+				oOptions.patch = false;
+			}
+			//
+			// reset others if major or minor sets
+			if (!isBool(oOptions.major)) {
+				if (oOptions.minor===true) oOptions.minor = false;
+				if (oOptions.patch===true) oOptions.patch = false;
+			} else if (!isBool(oOptions.minor)) {
+				if (oOptions.patch===true) oOptions.patch = false;
+			}
+		}
+		//
+		// set bump string
+		sBump = oOptions.major===true&&'major'||oOptions.minor===true&&'minor'||oOptions.patch===true&&'patch';
+		//
 		// check if GIT is installed for project
 		if (oOptions.git) {
 			exec('git rev-list HEAD --count', function(error,stdout){//,stderr
@@ -48,53 +85,56 @@ module.exports = function (grunt) {
 					,sSource = fs.readFileSync(src).toString()
 					// the current version
 					,aMatch = sSource.match(oOptions.regex)
-					,sVersion = sSource.match(oOptions.regex).pop()
-					,aVersion = sVersion.split('.')
-					,oCurVersion = {
-						major: aVersion[0]
-						,minor: aVersion[1]
-						,revision: aVersion[2]
-					}
-					// the new version
-					,sNewMajor = newNumber('major')
-					,sNewMinor = newNumber('minor')
-					,sNewRevision = newNumber('revision')
-					,bMajor = oCurVersion.major!==sNewMajor
-					,bMinor = oCurVersion.minor!==sNewMinor
-					,bRevision = oCurVersion.revision!==sNewRevision
+					,sVersion = aMatch.slice(0).pop()
+					,aVersion = sVersion.split('.').map(function(s){
+						return parseInt(s,10);
+					})
+					,aVersionNew = aVersion.slice(0)
+					,sVersionNew
 				;
-				if (oOptions.git) {
-					if (oCurVersion.revision!==gitRevision) {
-						sNewRevision = gitRevision;
-						saveVersion();
-					} else if (bMajor||bMinor) {
-						saveVersion();
-					} else {
-						dontSaveVersion();
+				//
+				//
+				// bump version
+				if (sBump) {
+					var iStart = aNumNum[sBump]
+						,iLen = 3-iStart
+					;
+					for (var j=0;j<iLen;j++) {
+						var iPos = 3-iLen+j;
+						if (j===0) {
+							aVersionNew[iPos]++;
+						} else {
+							aVersionNew[iPos] = 0;
+						}
 					}
-				} else if (bMajor||bMinor||bRevision) {
-					saveVersion();
-				} else {
-					dontSaveVersion();
+				} else { // set version
+					if (!isBool(oOptions.major)) aVersionNew[0] = oOptions.major;
+					if (!isBool(oOptions.minor)) aVersionNew[1] = oOptions.minor;
+					if (!isBool(oOptions.patch)) aVersionNew[2] = oOptions.patch;
 				}
-				function newNumber(type){
-					var oParam = grunt.option(type)
-						,oSet = oOptions[type]
-						,oCur = oCurVersion[type];
-					return oParam!==undefined?oParam:(oSet===true?''+(parseInt(oCur,10)+1):(oSet===false?oCur:oSet));
+				sVersionNew = aVersionNew.join('.');
+//				console.log('__',sVersion,sVersionNew); // log
+				//
+				// add build
+				if (oOptions.git) {
+					sVersionNew = sVersionNew+'+'+gitRevision;
 				}
-				function saveVersion(){
-					var sNewVersion = sNewMajor+'.'+sNewMinor+'.'+sNewRevision;
-					sSource = sSource.replace(aMatch[0],aMatch[0].replace(sVersion,sNewVersion));
+				//
+				if (sVersionNew!==sVersion) {
+					console.log('save',sVersion,sVersionNew); // log
+					sSource = sSource.replace(oOptions.regex,sVersionNew);
 					fs.writeFileSync(src,sSource);
-					grunt.log.writeln('File \''+src+'\' updated from',sVersion,'to',sNewVersion);
+					grunt.log.writeln('File \''+src+'\' updated from',sVersion,'to',sVersionNew);
 					bLastFile&&done(true);
-				}
-				function dontSaveVersion(){
+				} else {
 					grunt.log.writeln('File \''+src+'\' is up to date',sVersion);
 					bLastFile&&done(true);
 				}
 			});
+		}
+
+		function isBool(o){
+			return o===true||o===false;
 		}
 	});
 };

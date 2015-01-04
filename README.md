@@ -60,7 +60,7 @@ ipsum
 
 #### options.git
 Type: `Boolean`
-Default value: `true`
+Default value: `false`
 
 ipsum
 

@@ -10,99 +10,121 @@
 
 module.exports = function (grunt) {
 
-	var aTestFiles = '....'.split('.').map(function(o,i){
-		return 'test/fixtures/file'+i+'.js';
-	});
+    // Load grunt tasks automatically
+    require('load-grunt-tasks')(grunt);
+	grunt.loadTasks('gruntTasks');
+	grunt.loadTasks('tasks');
+
+	var sSource = 'test/file.js'
+		,sTargetPath = 'test/fixtures/'
+		,aFiles = []
+		,aTests = [
+			'set_major'
+			,'bump_major'
+			,'set_minor'
+			,'bump_minor'
+			,'set_patch'
+			,'bump_patch'
+			,'cli_set_minor'
+			,'cli_bump_minor'
+		]
+	;
+
+	function makeFile(source,target,version){
+		var fs = require('fs')
+			,sSource = fs.readFileSync(source).toString();
+		fs.writeFileSync(target,sSource.replace('0.0.0',version));
+		aFiles.push(target);
+		return target;
+	}
+	function wrapMakeFile(name){
+		return makeFile(sSource,sTargetPath+name+'.js','1.2.3');
+	}
+	function getFileName(name){
+		return sTargetPath+name+'.js';
+	}
 
 	// Project configuration.
 	grunt.initConfig({
 		jshint: {
 			all: [
 				'Gruntfile.js','tasks/*.js','<%= nodeunit.tests %>'
-			],
-			options: {
+			]
+			,options: {
 				jshintrc: '.jshintrc'
 			}
-		},
+		}
 
 		// Before generating any new files, remove any previously-created files.
-		clean: {
+		,clean: {
 			tests: ['tmp']
-		},
-		preparetest: {
+		}
+		,preparetest: {
 			foo: {}
-		},
+		}
 
 		// Configuration to be run (and then tested).
-		version_git: {
-			default_options: {
-				files: {src:'test/fixtures/*'}
-			},
+		,version_git: {
 			set_major: {
-				options: {
-					major: '7'
-					,revision: false
-				},
-				files: {src:aTestFiles[1]}
-			},
-			bump_major: {
-				options: {
-					major: true
-					,revision: false
-				},
-				files: {src:aTestFiles[2]}
-			},
-			set_minor: {
-				options: {
-					minor: '11'
-					,revision: false
-				},
-				files: {src:aTestFiles[3]}
-			},
-			bump_minor: {
-				options: {
-					minor: true
-					,revision: false
-				},
-				files: {src:aTestFiles[4]}
+				options: { major: 7 }
+				,files: {src:getFileName('set_major')}
 			}
-		},
+			,bump_major: {
+				options: { major: true }
+				,files: {src:getFileName('bump_major')}
+			}
+			,set_minor: {
+				options: { minor: 7 }
+				,files: {src:getFileName('set_minor')}
+			}
+			,bump_minor: {
+				options: { minor: true }
+				,files: {src:getFileName('bump_minor')}
+			}
+			,set_patch: {
+				options: { patch: 7 }
+				,files: {src:getFileName('set_patch')}
+			}
+			,bump_patch: {
+				options: { patch: true }
+				,files: {src:getFileName('bump_patch')}
+			}
+			// cli
+			,cli_set_minor: {
+				options: { patch: false }
+				,files: {src:getFileName('cli_set_minor')}
+			}
+			,cli_bump_minor: {
+				options: { patch: false }
+				,files: {src:getFileName('cli_bump_minor')}
+			}
+		}
+
+		// command line interface
+		,cli: {
+			set_minor: { cwd: './', command: 'grunt version_git:cli_set_minor --minor=7', output: true }
+			,bump_minor: { cwd: './', command: 'grunt version_git:cli_bump_minor --minor', output: true }
+		}
 
 		// Unit tests.
-		nodeunit: {
+		,nodeunit: {
 			tests: ['test/*_test.js']
 		}
 
 	});
 
 	grunt.registerMultiTask('preparetest', '', function() {
-		var fs = require('fs')
-			,sSource = fs.readFileSync('test/file.js').toString()
-		;
-		aTestFiles.forEach(function(src,i){
-			fs.writeFileSync(src,sSource.replace('0.0.0','1.'+(3*i%5)+'.'+i));
-		});
+		aTests.forEach(wrapMakeFile.bind(null));
 	});
 
-
-	// Actually load this plugin's task(s).
-	grunt.loadTasks('tasks');
-
-	// These plugins provide necessary tasks.
-	grunt.loadNpmTasks('grunt-contrib-jshint');
-	grunt.loadNpmTasks('grunt-contrib-clean');
-	grunt.loadNpmTasks('grunt-contrib-nodeunit');
-
-	// Whenever the "test" task is run, first clean the "tmp" dir, then run this
-	// plugin's task(s), then test the result.
 	grunt.registerTask('test',[
 		'clean'
 		,'preparetest'
 		,'version_git'
+		,'cli'
 		,'nodeunit'
 	]);
 
-	// By default, lint and run all tests.
 	grunt.registerTask('default',['jshint','test']);
 
 };
