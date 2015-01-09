@@ -29,8 +29,13 @@ var aFiles = [
 		,'test/fixtures/bump_minor.js'
 		,'test/fixtures/set_patch.js'
 		,'test/fixtures/bump_patch.js'
+		,'test/fixtures/cli_set_major.js'
+		,'test/fixtures/cli_bump_major.js'
 		,'test/fixtures/cli_set_minor.js'
 		,'test/fixtures/cli_bump_minor.js'
+		,'test/fixtures/cli_set_patch.js'
+		,'test/fixtures/cli_bump_patch.js'
+		,'test/fixtures/var.js'
 	]
 	,oVersions = {
 		set_major: '7.2.3'
@@ -39,8 +44,13 @@ var aFiles = [
 		,bump_minor: '1.3.0'
 		,set_patch: '1.2.7'
 		,bump_patch: '1.2.4'
+		,cli_set_major: '7.2.3'
+		,cli_bump_major: '2.0.0'
 		,cli_set_minor: '1.7.3'
 		,cli_bump_minor: '1.3.0'
+		,cli_set_patch: '1.2.7'
+		,cli_bump_patch: '1.2.4'
+		,var: '1.2.4'
 	}
 	,oExports = {
 		setUp: function(done) {
@@ -52,10 +62,15 @@ var aFiles = [
 
 aFiles.forEach(function(filePath){
 	var sKey = filePath.split('/').pop().split('.').shift()
-		,sVersion = grunt.file.read(filePath).match(/\d+\.\d+\.\d+/).pop();//.split('.');
+		,sFile = grunt.file.read(filePath)
+		,sVersion = sFile.match(/\d+\.\d+\.\d+/).pop()
+		,sVLast = sFile.match(/\d+\.\d+\.\d+/g).pop()
+		,isVar = sKey==='var'
+	;
 	oExports[sKey] = function(test) {
-		test.expect(1);
+		test.expect(isVar?2:1);
 		test.equal(sVersion,oVersions[sKey],sKey);
+		if (isVar) test.equal(sVLast,oVersions[sKey],sKey);
 		test.done();
 	};
 });

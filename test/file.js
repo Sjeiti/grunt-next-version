@@ -1,8 +1,9 @@
 /*
  * Example
- * @version 0.0.0
+ * @version 1.2.3
  */
 (function(){
 	'use strict';
-	return {};
+	var sVersion = '0.1.2';
+	return {version:sVersion};
 })();

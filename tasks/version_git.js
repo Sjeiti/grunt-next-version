@@ -21,7 +21,7 @@ module.exports = function (grunt) {
 			,oOptions = this.options({
 				major: false
 				,minor: false
-				,patch: true
+				,patch: false
 				,build: 'num'//||hash
 				,git: false
 				,regex: /\d+\.\d+\.\d+/
@@ -29,19 +29,20 @@ module.exports = function (grunt) {
 			,iFiles = aFiles.length
 			,sBump
 			//
-			,oOptionMajor = grunt.option('major')
-			,oOptionMinor = grunt.option('minor')
-			,oOptionPatch = grunt.option('patch')
-			,bOptionMajor = oOptionMajor!==undefined
-			,bOptionMinor = oOptionMinor!==undefined
-			,bOptionPatch = oOptionPatch!==undefined
+			,gn = grunt.option
+			,oParamMajor = gn('major')||gn('MAJOR')
+			,oParamMinor = gn('minor')||gn('MINOR')
+			,oParamPatch = gn('patch')||gn('PATCH')
+			,bParamMajor = oParamMajor!==undefined
+			,bParamMinor = oParamMinor!==undefined
+			,bParamPatch = oParamPatch!==undefined
 		;
 		//
 		// params
-		if (bOptionMajor||bOptionMinor||bOptionPatch) {
-			oOptions.major = bOptionMajor?oOptionMajor:false;
-			oOptions.minor = bOptionMinor?oOptionMinor:false;
-			oOptions.patch = bOptionPatch?oOptionPatch:false;
+		if (bParamMajor||bParamMinor||bParamPatch) {
+			oOptions.major = bParamMajor?oParamMajor:false;
+			oOptions.minor = bParamMinor?oParamMinor:false;
+			oOptions.patch = bParamPatch?oParamPatch:false;
 		} else {
 			// reset others if major or minor bumps
 			if (oOptions.major===true) {
@@ -58,6 +59,11 @@ module.exports = function (grunt) {
 			} else if (!isBool(oOptions.minor)) {
 				if (oOptions.patch===true) oOptions.patch = false;
 			}
+		}
+		//
+		// if all options are false simply bump patch
+		if (oOptions.major===false&&oOptions.minor===false&&oOptions.patch===false) {
+			oOptions.patch = true;
 		}
 		//
 		// set bump string
@@ -80,18 +86,28 @@ module.exports = function (grunt) {
 		}
 		// Iterate over all specified file groups.
 		function iterateFiles(gitRevision){
-			aFiles.forEach(function(src,i) {
+			aFiles.forEach(function(src,i) { // todo: first check all files for highest version
 				var bLastFile = i===iFiles-1
 					,sSource = fs.readFileSync(src).toString()
-					// the current version
-					,aMatch = sSource.match(oOptions.regex)
-					,sVersion = aMatch.slice(0).pop()
-					,aVersion = sVersion.split('.').map(function(s){
-						return parseInt(s,10);
-					})
-					,aVersionNew = aVersion.slice(0)
+					,sVersion
+					,aVersionNew
 					,sVersionNew
+					,bRegexArray = Array.isArray(oOptions.regex)
 				;
+				if (bRegexArray) {
+					var iVersionMax = 0;
+					oOptions.regex.forEach(function(regex){
+						var sCheck = getSourceVersion(sSource,regex)
+							,iCheck = versionToInt(sCheck);
+						if (iCheck>iVersionMax) {
+							iVersionMax = iCheck;
+							sVersion = sCheck;
+						}
+					});
+				} else {
+					sVersion = getSourceVersion(sSource,oOptions.regex);
+				}
+				aVersionNew = getVersionArray(sVersion);
 				//
 				//
 				// bump version
@@ -119,10 +135,15 @@ module.exports = function (grunt) {
 				if (oOptions.git) {
 					sVersionNew = sVersionNew+'+'+gitRevision;
 				}
-				//
+				// save file
 				if (sVersionNew!==sVersion) {
-					console.log('save',sVersion,sVersionNew); // log
-					sSource = sSource.replace(oOptions.regex,sVersionNew);
+					if (bRegexArray) {
+						oOptions.regex.forEach(function(regex){
+							sSource = replaceSource(sSource,regex,sVersionNew);
+						});
+					} else {
+						sSource = replaceSource(sSource,oOptions.regex,sVersionNew);
+					}
 					fs.writeFileSync(src,sSource);
 					grunt.log.writeln('File \''+src+'\' updated from',sVersion,'to',sVersionNew);
 					bLastFile&&done(true);
@@ -132,6 +153,50 @@ module.exports = function (grunt) {
 				}
 			});
 		}
+
+		function replaceSource(source,regex,version){
+			var aMatch = source.match(regex);
+			if (aMatch) {
+				var iMatch = aMatch.length
+					,sReplace = aMatch.pop();
+				if (iMatch===2) {
+					var sFull = aMatch.pop();
+					source = source.replace(sFull,sFull.replace(sReplace,version));
+				} else {
+					source = source.replace(regex,version);
+				}
+			}
+			return source;
+		}
+
+		function getSourceVersion(source,regex){
+			var aMatch = source.match(regex);
+			return aMatch?aMatch.slice(0).pop():'0.0.0';
+		}
+
+		function getVersionArray(version){
+			return version.split('.').map(function(s){ return parseInt(s,10); });
+		}
+
+		function versionToInt(version){
+			var iMax = 1E6
+				,iNumber = 0;
+			getVersionArray(version).forEach(function (n,i) {
+				iNumber += n * Math.pow(iMax,3 - i);
+			});
+			return iNumber;
+		}
+
+		/*function intToVersion(int){
+			var iMax = 1E6
+				,aVersion = [];
+			for (var i=0;i<3;i++) {
+				var iNumber = Math.floor(int / Math.pow(iMax,3 - i));
+				int -= iNumber * Math.pow(iMax,3 - i);
+				aVersion.push(iNumber);
+			}
+			return aVersion.join('.');
+		}*/
 
 		function isBool(o){
 			return o===true||o===false;
