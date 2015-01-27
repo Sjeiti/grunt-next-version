@@ -20,7 +20,7 @@ grunt.loadNpmTasks('grunt-version-git');
 ## The "version_git" task
 
 This task changes version numbers in files, including the option to change the revision number to the number of Git commits.
-The task makes use of the `git` command and expects it to be globally installed.
+The task can make use of the `git` command and expects it to be globally installed.
 
 ### Overview
 In your project's Gruntfile, add a section named `version_git` to the data object passed into `grunt.initConfig()`.
@@ -44,31 +44,41 @@ grunt.initConfig({
 Type: `Boolean|Number`
 Default value: `false`
 
-lorem
-
 #### options.minor
 Type: `Boolean|Number`
 Default value: `false`
 
-ipsum
-
-#### options.release
+#### options.patch
 Type: `Boolean|Number`
 Default value: `true`
 
-ipsum
+#### options.version
+Type: `String`
 
 #### options.git
 Type: `Boolean`
 Default value: `false`
-
-ipsum
+Appends a build number based on the number of GIT commits, ie: v1.2.3+897.
 
 #### options.regex
-Type: `Regexp`
+Type: `Regexp|Regexp[]`
 Default value: `/\d+\.\d+\.\d+/`
 
-ipsum
+
+### Command line options
+
+Versioning options can be used by CLI, which is very useful for bumping majors and minors. The following overrides the setup from the gruntfile and sets the major version of all files:
+
+`grunt version_git --major=3`
+
+Other options are:
+
+`grunt version_git --minor=3`
+
+`grunt version_git --patch=3`
+
+`grunt version_git --vs="2.3.4"`
+
 
 ### Usage Examples
 
@@ -78,10 +88,8 @@ In this example, the default options are used to do something with whatever. So 
 ```js
 grunt.initConfig({
   version_git: {
-    files: {
-      src: ['src/testing/file0.js'],
-    },
-  },
+    files: ['src/testing/file0.js']
+  }
 })
 ```
 
@@ -104,10 +112,8 @@ grunt.initConfig({
   version_git: {
     options: {
     },
-    files: {
-      src: ['src/testing', 'src/123'],
-    },
-  },
+    src: ['src/testing', 'src/123']
+  }
 })
 ```
 
