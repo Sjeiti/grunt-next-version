@@ -9,19 +9,20 @@
 'use strict';
 module.exports = function (grunt) {
 	grunt.registerMultiTask('version_git','Change version numbers in files, including the option to change the patch number to the number of Git commits.',function () {
-		var aFiles = [];
-		this.files.forEach(function (f) {
-			Array.prototype.push.apply(aFiles,f.src);
-		});
 		var done = this.async()
 			,fs = require('fs')
 			,exec = require('child_process').exec
+            //
+            ,oData = this.data
+            ,aFiles = oData.src
+            //
 			,aNumNum = {major:0,minor:1,patch:2}
 			// set default options
 			,oOptions = this.options({
 				major: false
 				,minor: false
 				,patch: false
+				,version: false
 				,build: 'num'//||hash
 				,git: false
 				,regex: /\d+\.\d+\.\d+/
@@ -33,13 +34,20 @@ module.exports = function (grunt) {
 			,oParamMajor = gn('major')||gn('MAJOR')
 			,oParamMinor = gn('minor')||gn('MINOR')
 			,oParamPatch = gn('patch')||gn('PATCH')
+			,oParamVersion = gn('vr')||gn('VR')
 			,bParamMajor = oParamMajor!==undefined
 			,bParamMinor = oParamMinor!==undefined
 			,bParamPatch = oParamPatch!==undefined
+			,bParamVersion = oParamVersion!==undefined
 		;
 		//
 		// params
-		if (bParamMajor||bParamMinor||bParamPatch) {
+		if (bParamVersion||oOptions.version) {
+            var aParamVersion = (oOptions.version||oParamVersion).split('.');
+			oOptions.major = aParamVersion[0];
+			oOptions.minor = aParamVersion[1];
+			oOptions.patch = aParamVersion[2];
+        } else if (bParamMajor||bParamMinor||bParamPatch) {
 			oOptions.major = bParamMajor?oParamMajor:false;
 			oOptions.minor = bParamMinor?oParamMinor:false;
 			oOptions.patch = bParamPatch?oParamPatch:false;
@@ -86,13 +94,16 @@ module.exports = function (grunt) {
 		}
 		// Iterate over all specified file groups.
 		function iterateFiles(gitRevision){
-			aFiles.forEach(function(src,i) { // todo: first check all files for highest version
-				var bLastFile = i===iFiles-1
-					,sSource = fs.readFileSync(src).toString()
+            var sHighestVersion = '0.0.0'
+                ,iHighestVersion = 0
+                ,aProcessedFiles = [];
+			aFiles.forEach(function(src) {
+				var sSource = fs.readFileSync(src).toString()
 					,sVersion
 					,aVersionNew
 					,sVersionNew
 					,bRegexArray = Array.isArray(oOptions.regex)
+                    ,iVersion
 				;
 				if (bRegexArray) {
 					var iVersionMax = 0;
@@ -128,8 +139,26 @@ module.exports = function (grunt) {
 					if (!isBool(oOptions.minor)) aVersionNew[1] = oOptions.minor;
 					if (!isBool(oOptions.patch)) aVersionNew[2] = oOptions.patch;
 				}
-				sVersionNew = aVersionNew.join('.');
-//				console.log('__',sVersion,sVersionNew); // log
+                sVersionNew = aVersionNew.join('.');
+                iVersion = versionToInt(sVersionNew);
+                if (iVersion>iHighestVersion) {
+                    iHighestVersion = iVersion;
+                    sHighestVersion = sVersionNew;
+                }
+                aProcessedFiles.push({
+                    version: sVersion
+                    ,source: sSource
+                    ,src: src
+                });
+            });
+			aProcessedFiles.forEach(function(o,i) {
+				var bLastFile = i===iFiles-1
+                    ,src = o.src
+					,sSource = o.source//fs.readFileSync(src).toString()
+					,sVersion = o.version
+					,sVersionNew = sHighestVersion
+					,bRegexArray = Array.isArray(oOptions.regex)
+				;
 				//
 				// add build
 				if (oOptions.git) {

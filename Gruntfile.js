@@ -25,19 +25,30 @@ module.exports = function (grunt) {
 			,'bump_minor'
 			,'set_patch'
 			,'bump_patch'
+			,'version'
+			,'multiple1'
+			,'multiple2'
+			,'multiple3'
+			,'var'
 			,'cli_set_major'
 			,'cli_bump_major'
 			,'cli_set_minor'
 			,'cli_bump_minor'
 			,'cli_set_patch'
 			,'cli_bump_patch'
-			,'var'
+			,'cli_set_version'
 		]
 	;
 
 	function makeFile(source,target){
 		var fs = require('fs')
 			,sSource = fs.readFileSync(source).toString();
+        //
+        if (target.indexOf('multiple')!==-1) {
+            var iNr = target.match(/\d/).pop();
+            sSource = sSource.replace('1.2.3',['1.3.1','2.3.1','2.3.2'][iNr-1]);
+        }
+        //
 		fs.writeFileSync(target,sSource);
 		aFiles.push(target);
 		return target;
@@ -63,38 +74,46 @@ module.exports = function (grunt) {
 		,version_git: {
 			set_major: {
 				options: { major: 7 }
-				,files: {src:getFileName('set_major')}
+				,src: [getFileName('set_major')]
 			}
 			,bump_major: {
 				options: { major: true }
-				,files: {src:getFileName('bump_major')}
+				,src: [getFileName('bump_major')]
 			}
 			,set_minor: {
 				options: { minor: 7 }
-				,files: {src:getFileName('set_minor')}
+				,src: [getFileName('set_minor')]
 			}
 			,bump_minor: {
 				options: { minor: true }
-				,files: {src:getFileName('bump_minor')}
+				,src: [getFileName('bump_minor')]
 			}
 			,set_patch: {
 				options: { patch: 7 }
-				,files: {src:getFileName('set_patch')}
+				,src: [getFileName('set_patch')]
 			}
 			,bump_patch: {
-				files: {src:getFileName('bump_patch')}
+				src: [getFileName('bump_patch')]
+			}
+			,version: {
+				options: { version: '6.5.4' }
+				,src: [getFileName('version')]
+			}
+			,multiple: {
+				src: [getFileName('multiple1'),getFileName('multiple2'),getFileName('multiple3')]
 			}
 			,var: {
 				options: { regex: [/\d+\.\d+\.\d+/,/sVersion\s*=\s*'(\d+\.\d+\.\d+)'/] }
-				,files: {src:getFileName('var')}
+				,src: [getFileName('var')]
 			}
 			// cli
-			,cli_set_major: {	files: {src:getFileName('cli_set_major')}}
-			,cli_bump_major: {	files: {src:getFileName('cli_bump_major')}}
-			,cli_set_minor: {	files: {src:getFileName('cli_set_minor')}}
-			,cli_bump_minor: {	files: {src:getFileName('cli_bump_minor')}}
-			,cli_set_patch: {	files: {src:getFileName('cli_set_patch')}}
-			,cli_bump_patch: {	files: {src:getFileName('cli_bump_patch')}}
+			,cli_set_major: {	src: [getFileName('cli_set_major')]}
+			,cli_bump_major: {	src: [getFileName('cli_bump_major')]}
+			,cli_set_minor: {	src: [getFileName('cli_set_minor')]}
+			,cli_bump_minor: {	src: [getFileName('cli_bump_minor')]}
+			,cli_set_patch: {	src: [getFileName('cli_set_patch')]}
+			,cli_bump_patch: {	src: [getFileName('cli_bump_patch')]}
+			,cli_set_version: {	src: [getFileName('cli_set_version')]}
 		}
 
 		// command line interface
@@ -105,6 +124,7 @@ module.exports = function (grunt) {
 			,bump_minor: { cwd: './', command: 'grunt version_git:cli_bump_minor --minor', output: true }
 			,set_patch: { cwd: './', command: 'grunt version_git:cli_set_patch --patch=7', output: true }
 			,bump_patch: { cwd: './', command: 'grunt version_git:cli_bump_patch --patch', output: true }
+			,set_version: { cwd: './', command: 'grunt version_git:cli_set_version --vr=4.5.6', output: true }
 		}
 
 		// Unit tests.
@@ -125,7 +145,9 @@ module.exports = function (grunt) {
 		,'version_git:bump_minor'
 		,'version_git:set_patch'
 		,'version_git:bump_patch'
+		,'version_git:version'
 		,'version_git:var'
+		,'version_git:multiple'
 	]);
 
 	grunt.registerTask('test',[
