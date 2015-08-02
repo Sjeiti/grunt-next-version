@@ -2,7 +2,7 @@
  * grunt-version-git
  * https://github.com/Sjeiti/grunt-version-git
  *
- * Copyright (c) 2014 Ron Valstar
+ * Copyright (c) 2015 Ron Valstar
  * Licensed under the MIT license.
  */
 
@@ -13,77 +13,83 @@ module.exports = function (grunt) {
 			,fs = require('fs')
 			,exec = require('child_process').exec
             //
-            ,oData = this.data
-            ,aFiles = oData.src
+            ,data = this.data
+            ,files = data.src
             //
-			,aNumNum = {major:0,minor:1,patch:2}
+			,versionObject = {major:0,minor:1,patch:2}
 			// set default options
-			,oOptions = this.options({
+			,options = this.options({
 				major: false
 				,minor: false
 				,patch: false
 				,version: false
 				,build: 'num'//||hash
 				,git: false
-				,regex: /\d+\.\d+\.\d+/
+				,regex: /\d+\.\d+\.\d+-?[0-9A-Za-z-.]*\+?[0-9A-Za-z-.]*/
 			})
-			,iFiles = aFiles.length
-			,sBump
+			,filesNum = files.length
+			,isBump
 			//
-			,gn = grunt.option
-			,oParamMajor = gn('major')||gn('MAJOR')
-			,oParamMinor = gn('minor')||gn('MINOR')
-			,oParamPatch = gn('patch')||gn('PATCH')
-			,oParamVersion = gn('vr')||gn('VR')
-			,bParamMajor = oParamMajor!==undefined
-			,bParamMinor = oParamMinor!==undefined
-			,bParamPatch = oParamPatch!==undefined
-			,bParamVersion = oParamVersion!==undefined
+			,params = grunt.option
+			,paramMajor = params('major')||params('MAJOR')
+			,paramMinor = params('minor')||params('MINOR')
+			,paramPatch = params('patch')||params('PATCH')
+			,paramVersion = params('vr')||params('VR')
+			,paramRelease = params('rel')||params('release')
+			,paramGit = params('git')||params('GIT')
+			//
+			,isParamMajor = paramMajor!==undefined
+			,isParamMinor = paramMinor!==undefined
+			,isParamPatch = paramPatch!==undefined
+			,isParamVersion = paramVersion!==undefined
+			,isParamRelease = paramRelease!==undefined
+			,isParamGit = paramGit!==undefined
 		;
 		//
 		// params
-		if (bParamVersion||oOptions.version) {
-            var aParamVersion = (oOptions.version||oParamVersion).split('.');
-			oOptions.major = aParamVersion[0];
-			oOptions.minor = aParamVersion[1];
-			oOptions.patch = aParamVersion[2];
-        } else if (bParamMajor||bParamMinor||bParamPatch) {
-			oOptions.major = bParamMajor?oParamMajor:false;
-			oOptions.minor = bParamMinor?oParamMinor:false;
-			oOptions.patch = bParamPatch?oParamPatch:false;
+		if (isParamVersion||options.version) {
+            var paramVersionList = (options.version||paramVersion).split('.');
+			options.major = paramVersionList[0];
+			options.minor = paramVersionList[1];
+			options.patch = paramVersionList[2];
+        } else if (isParamMajor||isParamMinor||isParamPatch) {
+			options.major = isParamMajor?paramMajor:false;
+			options.minor = isParamMinor?paramMinor:false;
+			options.patch = isParamPatch?paramPatch:false;
 		} else {
 			// reset others if major or minor bumps
-			if (oOptions.major===true) {
-				oOptions.minor = false;
-				oOptions.patch = false;
-			} else if (oOptions.minor===true) {
-				oOptions.patch = false;
+			if (options.major===true) {
+				options.minor = false;
+				options.patch = false;
+			} else if (options.minor===true) {
+				options.patch = false;
 			}
 			//
 			// reset others if major or minor sets
-			if (!isBool(oOptions.major)) {
-				if (oOptions.minor===true) oOptions.minor = false;
-				if (oOptions.patch===true) oOptions.patch = false;
-			} else if (!isBool(oOptions.minor)) {
-				if (oOptions.patch===true) oOptions.patch = false;
+			if (!isBool(options.major)) {
+				if (options.minor===true) options.minor = false;
+				if (options.patch===true) options.patch = false;
+			} else if (!isBool(options.minor)) {
+				if (options.patch===true) options.patch = false;
 			}
 		}
+		if (isParamGit&&paramGit) options.git = true;
 		//
 		// if all options are false simply bump patch
-		if (oOptions.major===false&&oOptions.minor===false&&oOptions.patch===false) {
-			oOptions.patch = true;
+		if (options.major===false&&options.minor===false&&options.patch===false) {
+			options.patch = true;
 		}
 		//
 		// set bump string
-		sBump = oOptions.major===true&&'major'||oOptions.minor===true&&'minor'||oOptions.patch===true&&'patch';
+		isBump = options.major===true&&'major'||options.minor===true&&'minor'||options.patch===true&&'patch';
 		//
 		// check if GIT is installed for project
-		if (oOptions.git) {
+		if (options.git) {
 			exec('git rev-list HEAD --count', function(error,stdout){//,stderr
-				var aMatch = stdout.match(/\d+/)
-					,bGIT = !!aMatch;
-				if (bGIT) {
-					iterateFiles(aMatch.pop());
+				var match = stdout.match(/\d+/)
+					,hasGit = !!match;
+				if (hasGit) {
+					iterateFiles(match.pop());
 				} else {
 					console.warn('GIT not found'); // log
 					done(false);
@@ -94,103 +100,105 @@ module.exports = function (grunt) {
 		}
 		// Iterate over all specified file groups.
 		function iterateFiles(gitRevision){
-            var sHighestVersion = '0.0.0'
-                ,iHighestVersion = 0
-                ,aProcessedFiles = [];
-			aFiles.forEach(function(src) {
-				var sSource = fs.readFileSync(src).toString()
-					,sVersion
-					,aVersionNew
-					,sVersionNew
-					,bRegexArray = Array.isArray(oOptions.regex)
-                    ,iVersion
+            var highestVersion = '0.0.0'
+                ,highestVersionNumeral = 0
+                ,processedFiles = [];
+			files.forEach(function(src) {
+				var source = fs.readFileSync(src).toString()
+					,version
+					,versionNewList
+					,versionNew
+					,isRegexArray = Array.isArray(options.regex)
+                    ,versionNumber
 				;
-				if (bRegexArray) {
-					var iVersionMax = 0;
-					oOptions.regex.forEach(function(regex){
-						var sCheck = getSourceVersion(sSource,regex)
-							,iCheck = versionToInt(sCheck);
-						if (iCheck>iVersionMax) {
-							iVersionMax = iCheck;
-							sVersion = sCheck;
+				if (isRegexArray) {
+					var versionMax = 0;
+					options.regex.forEach(function(regex){
+						var check = getSourceVersion(source,regex)
+							,checkNumber = versionToInt(check);
+						if (checkNumber>versionMax) {
+							versionMax = checkNumber;
+							version = check;
 						}
 					});
 				} else {
-					sVersion = getSourceVersion(sSource,oOptions.regex);
+					version = getSourceVersion(source,options.regex);
 				}
-				aVersionNew = getVersionArray(sVersion);
-				//
+				versionNewList = getVersionArray(version);
 				//
 				// bump version
-				if (sBump) {
-					var iStart = aNumNum[sBump]
-						,iLen = 3-iStart
+				if (isBump) {
+					var start = versionObject[isBump]
+						,len = 3-start
 					;
-					for (var j=0;j<iLen;j++) {
-						var iPos = 3-iLen+j;
+					for (var j=0;j<len;j++) {
+						var pos = 3-len+j;
 						if (j===0) {
-							aVersionNew[iPos]++;
+							versionNewList[pos]++;
 						} else {
-							aVersionNew[iPos] = 0;
+							versionNewList[pos] = 0;
 						}
 					}
 				} else { // set version
-					if (!isBool(oOptions.major)) aVersionNew[0] = oOptions.major;
-					if (!isBool(oOptions.minor)) aVersionNew[1] = oOptions.minor;
-					if (!isBool(oOptions.patch)) aVersionNew[2] = oOptions.patch;
+					if (!isBool(options.major)) versionNewList[0] = options.major;
+					if (!isBool(options.minor)) versionNewList[1] = options.minor;
+					if (!isBool(options.patch)) versionNewList[2] = options.patch;
 				}
-                sVersionNew = aVersionNew.join('.');
-                iVersion = versionToInt(sVersionNew);
-                if (iVersion>iHighestVersion) {
-                    iHighestVersion = iVersion;
-                    sHighestVersion = sVersionNew;
+                versionNew = versionNewList.join('.');
+                versionNumber = versionToInt(versionNew);
+                if (versionNumber>highestVersionNumeral) {
+                    highestVersionNumeral = versionNumber;
+                    highestVersion = versionNew;
                 }
-                aProcessedFiles.push({
-                    version: sVersion
-                    ,source: sSource
+                processedFiles.push({
+                    version: version
+                    ,source: source
                     ,src: src
                 });
             });
-			aProcessedFiles.forEach(function(o,i) {
-				var bLastFile = i===iFiles-1
+			processedFiles.forEach(function(o,i) {
+				var isLastFile = i===filesNum-1
                     ,src = o.src
-					,sSource = o.source//fs.readFileSync(src).toString()
-					,sVersion = o.version
-					,sVersionNew = sHighestVersion
-					,bRegexArray = Array.isArray(oOptions.regex)
+					,source = o.source
+					,version = o.version
+					,versionNew = highestVersion
+					,isRegexArray = Array.isArray(options.regex)
 				;
-				//
+				// add release
+				if (isParamRelease) {
+					versionNew = versionNew+'-'+paramRelease;
+				}
 				// add build
-				if (oOptions.git) {
-					sVersionNew = sVersionNew+'+'+gitRevision;
+				if (options.git) {
+					versionNew = versionNew+'+'+gitRevision;
 				}
 				// save file
-				if (sVersionNew!==sVersion) {
-					if (bRegexArray) {
-						oOptions.regex.forEach(function(regex){
-							sSource = replaceSource(sSource,regex,sVersionNew);
+				if (versionNew!==version) {
+					if (isRegexArray) {
+						options.regex.forEach(function(regex){
+							source = replaceSource(source,regex,versionNew);
 						});
 					} else {
-						sSource = replaceSource(sSource,oOptions.regex,sVersionNew);
+						source = replaceSource(source,options.regex,versionNew);
 					}
-					fs.writeFileSync(src,sSource);
-					grunt.log.writeln('File \''+src+'\' updated from',sVersion,'to',sVersionNew);
-					bLastFile&&done(true);
+					fs.writeFileSync(src,source);
+					grunt.log.writeln('File \''+src+'\' updated from',version,'to',versionNew);
+					isLastFile&&done(true);
 				} else {
-					grunt.log.writeln('File \''+src+'\' is up to date',sVersion);
-					bLastFile&&done(true);
+					grunt.log.writeln('File \''+src+'\' is up to date',version);
+					isLastFile&&done(true);
 				}
 			});
 		}
 
 		function replaceSource(source,regex,version){
-			var aMatch = source.match(regex);
-			if (aMatch) {
-				var iMatch = aMatch.length
-					,sReplace = aMatch.pop();
-				if (iMatch===2) {
-					var sFull = aMatch.pop();
-					source = source.replace(sFull,sFull.replace(sReplace,version));
+			var match = source.match(regex);
+			if (match) {
+				var matchNum = match.length
+					,replace = match.pop();
+				if (matchNum===2) {
+					var sFull = match.pop();
+					source = source.replace(sFull,sFull.replace(replace,version));
 				} else {
 					source = source.replace(regex,version);
 				}
@@ -199,33 +207,22 @@ module.exports = function (grunt) {
 		}
 
 		function getSourceVersion(source,regex){
-			var aMatch = source.match(regex);
-			return aMatch?aMatch.slice(0).pop():'0.0.0';
+			var match = source.match(regex);
+			return match?match.slice(0).pop():'0.0.0';
 		}
 
 		function getVersionArray(version){
-			return version.split('.').map(function(s){ return parseInt(s,10); });
+			return version.split(/[-+]/g).shift().split('.').map(function(s){ return parseInt(s,10); });
 		}
 
 		function versionToInt(version){
-			var iMax = 1E6
-				,iNumber = 0;
+			var max = 1E6
+				,number = 0;
 			getVersionArray(version).forEach(function (n,i) {
-				iNumber += n * Math.pow(iMax,3 - i);
+				number += n * Math.pow(max,3 - i);
 			});
-			return iNumber;
+			return number;
 		}
-
-		/*function intToVersion(int){
-			var iMax = 1E6
-				,aVersion = [];
-			for (var i=0;i<3;i++) {
-				var iNumber = Math.floor(int / Math.pow(iMax,3 - i));
-				int -= iNumber * Math.pow(iMax,3 - i);
-				aVersion.push(iNumber);
-			}
-			return aVersion.join('.');
-		}*/
 
 		function isBool(o){
 			return o===true||o===false;
