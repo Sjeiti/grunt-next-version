@@ -1,0 +1,29 @@
+{
+  "globals": {
+    "run": true,
+    "describe": true,
+    "beforeEach": true,
+    "it": true,
+    "afterEach": true
+  },
+  "esnext": true,
+  "browser": true,
+  "node": true,
+  "devel": true,
+  "plusplus": false,
+  "white": false,
+  "nomen": false,
+  "noarg": true,
+  "nonew": true,
+  "undef": true,
+  "unused": true,
+  "trailing": true,
+  "laxcomma": true,
+  "loopfunc": true,
+  "scripturl": true,
+  "smarttabs": true,
+  "boss": true,
+  "expr": true,
+  "noempty": false,
+  "laxbreak": true
+}

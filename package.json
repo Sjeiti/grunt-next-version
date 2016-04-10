@@ -26,14 +26,19 @@
     "node": ">= 0.8.0"
   },
   "scripts": {
-    "test": "grunt test"
+    "test": "mocha ./test/test.js --delay"
   },
   "devDependencies": {
-    "grunt-contrib-jshint": "~0.6.0",
-    "grunt-contrib-clean": "~0.4.0",
-    "grunt-contrib-nodeunit": "~0.2.0",
     "grunt": "~0.4.1",
-    "load-grunt-tasks": "~2.0.0"
+    "grunt-contrib-clean": "~0.4.0",
+    "grunt-contrib-jshint": "~0.6.0",
+    "load-grunt-tasks": "~2.0.0",
+    "mkdirp": "^0.5.1",
+    "mocha": "^2.4.5",
+    "next-version": "^0.11.7"
+  },
+  "dependencies": {
+    "next-version": "^0.11.7"
   },
   "peerDependencies": {
     "grunt": ">=0.4.0"
