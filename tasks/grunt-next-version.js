@@ -1,6 +1,6 @@
 /*
  * grunt-next-version
- * https://github.com/Sjeiti/grunt-version-git
+ * https://github.com/Sjeiti/grunt-next-version
  *
  * Copyright (c) 2015 Ron Valstar
  * Licensed under the MIT license.

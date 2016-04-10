@@ -1,8 +1,8 @@
 {
-  "name": "grunt-version-git",
+  "name": "grunt-next-version",
   "description": "Change version numbers in files, including the option to change the revision number to the number of Git commits.",
   "version": "0.4.0",
-  "homepage": "https://github.com/Sjeiti/grunt-version-git",
+  "homepage": "https://github.com/Sjeiti/grunt-next-version",
   "author": {
     "name": "Ron Valstar",
     "email": "sjeiti@gmail.com",
@@ -10,15 +10,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Sjeiti/grunt-version-git.git"
+    "url": "https://github.com/Sjeiti/grunt-next-version.git"
   },
   "bugs": {
-    "url": "https://github.com/Sjeiti/grunt-version-git/issues"
+    "url": "https://github.com/Sjeiti/grunt-next-version/issues"
   },
   "licenses": [
     {
       "type": "MIT",
-      "url": "https://github.com/Sjeiti/grunt-version-git/blob/master/LICENSE-MIT"
+      "url": "https://github.com/Sjeiti/grunt-next-version/blob/master/LICENSE-MIT"
     }
   ],
   "main": "Gruntfile.js",
