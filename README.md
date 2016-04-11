@@ -17,17 +17,17 @@ Once the plugin has been installed, it may be enabled inside your Gruntfile with
 grunt.loadNpmTasks('grunt-next-version');
 ```
 
-## The "version_git" task
+## The "next_version" task
 
 This task changes version numbers in files, including the option to change the revision number to the number of Git commits.
 The task can make use of the `git` command and expects it to be globally installed.
 
 ### Overview
-In your project's Gruntfile, add a section named `version_git` to the data object passed into `grunt.initConfig()`.
+In your project's Gruntfile, add a section named `next_version` to the data object passed into `grunt.initConfig()`.
 
 ```js
 grunt.initConfig({
-  version_git: {
+  next_version: {
     options: {
       // Task-specific options go here.
     },
@@ -69,15 +69,15 @@ Default value: `/\d+\.\d+\.\d+/`
 
 Versioning options can be used by CLI, which is very useful for bumping majors and minors. The following overrides the setup from the gruntfile and sets the major version of all files:
 
-`grunt version_git --major=3`
+`grunt next_version --major=3`
 
 Other options are:
 
-`grunt version_git --minor=3`
+`grunt next_version --minor=3`
 
-`grunt version_git --patch=3`
+`grunt next_version --patch=3`
 
-`grunt version_git --vs="2.3.4"`
+`grunt next_version --vs="2.3.4"`
 
 
 ### Usage Examples
@@ -87,7 +87,7 @@ In this example, the default options are used to do something with whatever. So 
 
 ```js
 grunt.initConfig({
-  version_git: {
+  next_version: {
     files: ['src/testing/file0.js']
   }
 })
@@ -109,7 +109,7 @@ In this example, custom options are used to do something else with whatever else
 
 ```js
 grunt.initConfig({
-  version_git: {
+  next_version: {
     options: {
     },
     src: ['src/testing', 'src/123']
