@@ -2,7 +2,7 @@
  * grunt-next-version
  * https://github.com/Sjeiti/grunt-next-version
  *
- * Copyright (c) 2015 Ron Valstar
+ * Copyright (c) 2016 Ron Valstar
  * Licensed under the MIT license.
  */
 module.exports = grunt=>{
@@ -15,21 +15,17 @@ module.exports = grunt=>{
            major:'m'
           ,minor:'i'
           ,patch:'p'
-          //,version:'v'
+          //,version:'v' // cannot use
           ,version:'setversion'
           ,build:'b'
-          ,git:'q'
+          ,git:'q'  // cannot use g
           ,regex:'r'
         }
     ;
     for (var s in defaultOptions) {
-      //console.log('param',s); // todo: remove log
-      //console.log('param',s,translate[s]&&getParam(translate[s])||getParam(s),getParam('pg')); // todo: remove log
       var param = translate[s]&&getParam(translate[s])||getParam(s);
       if (param!==undefined) params[s] = param;
     }
-    //console.log('params',this.data.src); // todo: remove log
-    //console.log('options',this.options(params)); // todo: remove log
     version(this.data.src,this.options(params),this.async().bind(this));
 	});
 };
